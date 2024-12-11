@@ -4,6 +4,9 @@
 #include <iostream>
 #include "shader.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 using namespace std;
 
 // An iteration of the render loop is more commonly called a frame
@@ -169,6 +172,15 @@ int main() {
 		1,2,3
 	};
 
+
+	float rectangleVertices[] = {
+		// 0-2 positions // 3-5 colors    //6-7 texture coordinates 
+		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // top right
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+		-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left 
+	};
+
 	
 
 	// creates a values to store the vertexShader, then creates it
@@ -178,11 +190,9 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+	//glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-
-
+	
 	
 
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "LearnOpenGL", NULL, NULL);
@@ -195,6 +205,7 @@ int main() {
 
 	glfwMakeContextCurrent(window);
 
+
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
@@ -205,17 +216,53 @@ int main() {
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	
+	// allows for extensive debugging
+	int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+	{
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(glDebugOutput, nullptr);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	}
+	
 	//-----------------------------------------------------
 	//Shader Time 
 
 	Shader ourShader("vertex_shader.vert", "fragment_shader.frag");
-
+	
 	// First, create the Vertex Buffer Objects and Vertex Array Objects
 	// Vertex Buffer Objects maange the memory created on the GPU to store vertex data
 	// Vertex Array Objects works similarly but instead stores the following vertex attributes 
-	unsigned int VBOs[2], VAOs[2];
+	unsigned int VBOs[2], VAOs[2], EBOs[2];
+
+	
+	// First rectangle with texture setup
 	glGenVertexArrays(1, VAOs); // we can also generate multiple VAOs or buffers at the same time
 	glGenBuffers(1, VBOs);
+	glGenBuffers(1, EBOs);
+
+	glBindVertexArray(VAOs[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOs[0]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);	// Vertex attributes stay the same
+	glEnableVertexAttribArray(0);
+	// color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+		(void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// texture attribute
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+		(void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+
+	/*
 	// first triangle setup
 	// --------------------
 	glBindVertexArray(VAOs[0]);
@@ -247,15 +294,81 @@ int main() {
 	glEnableVertexAttribArray(0);
 	*/
 
-	
-	
+
+	/*
+	glGenVertexArrays(1, VAOs); // we can also generate multiple VAOs or buffers at the same time
+	glGenBuffers(1, VBOs);
+	// first triangle setup
+	// --------------------
+	glBindVertexArray(VAOs[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	*/
+
+
+
+
 
 	
+	
+	//-----------------------------------------------------
+	//Texture Time 
+
+	stbi_set_flip_vertically_on_load(true);
+
+	unsigned int texture, texture2;
+	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0); // activates the texture unit first
+	glBindTexture(GL_TEXTURE_2D, texture);
+	// set the texture wrapping/filtering options (on currently bound texture)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load and generate the texture
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
 
 
+	glGenTextures(1, &texture2);
+	glActiveTexture(GL_TEXTURE1); // activates the texture unit first
+	glBindTexture(GL_TEXTURE_2D, texture2);
 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	unsigned char* data2 = stbi_load("lighthouse.png", &width, &height, &nrChannels, 0);
+
+	if (data2) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	// frees up data from the texture
+	stbi_image_free(data);
+	stbi_image_free(data2);
 
 	
+	ourShader.use();
+	glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
+	ourShader.setInt("texture2", 1);
+
+
+
 	// render loop or while the window has not been instructed to be closed
 	while (!glfwWindowShouldClose(window)) {
 		// checks for key presses every frame
@@ -269,7 +382,7 @@ int main() {
 
 
 		// Activates the Shader program
-		ourShader.use();
+		//ourShader.use();
 		
 		// retrieves the running time in seconds
 		//float timeValue = glfwGetTime();
@@ -281,8 +394,16 @@ int main() {
 		//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 		// draws the first triangle from the data in the first Vertex Array Object
 		
+		//glBindVertexArray(VAOs[0]);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		glActiveTexture(GL_TEXTURE0); // activates the texture unit first
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glActiveTexture(GL_TEXTURE1); // activates the texture unit first
+		glBindTexture(GL_TEXTURE_2D, texture2);
+
 		glBindVertexArray(VAOs[0]);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
 		//glUseProgram(shaderProgram2);
@@ -301,6 +422,7 @@ int main() {
 	// ------------------------------------------------------------------------
 	glDeleteVertexArrays(2, VAOs);
 	glDeleteBuffers(2, VBOs);
+	glDeleteBuffers(2, EBOs);
 	//glDeleteProgram(shaderProgram2);
 
 

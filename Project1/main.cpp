@@ -1,5 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 #include "shader.h"
@@ -14,6 +17,8 @@ using namespace std;
 const unsigned int SCREEN_HEIGHT = 600;
 const unsigned int SCREEN_WIDTH = 800;
 
+float visibility = 0.5f;
+
 // used to callback the viewport dimensions if a user wants to resize the window
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -24,6 +29,21 @@ void processInput(GLFWwindow* window)
 	// checks to see whether the escape key is being pressed
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) ==GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) 
+	{
+		visibility += 0.001f;
+		if (visibility >= 1.0f) {
+			visibility = 1.0f;
+		}
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) 
+	{
+		visibility -= 0.001f;
+		if (visibility <= 0.0f) {
+			visibility = 0.0f;
+		}
+	}
+
 }
 
 
@@ -325,8 +345,8 @@ int main() {
 	// set the texture wrapping/filtering options (on currently bound texture)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// load and generate the texture
 	int width, height, nrChannels;
 	unsigned char* data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
@@ -346,13 +366,13 @@ int main() {
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	
-	unsigned char* data2 = stbi_load("lighthouse.png", &width, &height, &nrChannels, 0);
+	data = stbi_load("lighthouse.png", &width, &height, &nrChannels, 0);
 
-	if (data2) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else {
@@ -360,7 +380,6 @@ int main() {
 	}
 	// frees up data from the texture
 	stbi_image_free(data);
-	stbi_image_free(data2);
 
 	
 	ourShader.use();
@@ -380,7 +399,7 @@ int main() {
 
 
 
-
+		
 		// Activates the Shader program
 		//ourShader.use();
 		
@@ -397,11 +416,17 @@ int main() {
 		//glBindVertexArray(VAOs[0]);
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
 
+		
+
+	
 		glActiveTexture(GL_TEXTURE0); // activates the texture unit first
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glActiveTexture(GL_TEXTURE1); // activates the texture unit first
 		glBindTexture(GL_TEXTURE_2D, texture2);
 
+		ourShader.setFloat("visibility", visibility);
+
+		ourShader.use();
 		glBindVertexArray(VAOs[0]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

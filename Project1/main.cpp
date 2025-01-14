@@ -1,5 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+// Plugins for OpenGL Mathematics
+// Allows us to use mathematical transformations into our engine for any object
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -11,6 +14,7 @@
 #include "stb_image.h"
 
 using namespace std;
+using namespace glm;
 
 // An iteration of the render loop is more commonly called a frame
 
@@ -183,11 +187,62 @@ int main() {
 		0.5f,-0.5f, 0.0f, // bottom right
 		0.5f, 0.5f, 0.0f // top
 	};
-	
 
-	
+
+	float cubeVertices[] = {
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+		0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+		0.5f,0.5f, -0.5f, 1.0f, 1.0f,
+		-0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+		-0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+		0.5f,-0.5f, 0.5f, 1.0f,0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,1.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f,1.0f,
+		-0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+
+		-0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+		-0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+		-0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+		-0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+		-0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+		-0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+
+		0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+		0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+		0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+		0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+		0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+
+		-0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+		0.5f,-0.5f,-0.5f, 1.0f,1.0f,
+		0.5f,-0.5f, 0.5f, 1.0f,0.0f,
+		0.5f,-0.5f, 0.5f, 1.0f,0.0f,
+		-0.5f,-0.5f, 0.5f, 0.0f,0.0f,
+		-0.5f,-0.5f,-0.5f, 0.0f,1.0f,
+
+		-0.5f, 0.5f,-0.5f, 0.0f,1.0f,
+		0.5f, 0.5f,-0.5f, 1.0f,1.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+		0.5f, 0.5f, 0.5f, 1.0f,0.0f,
+		-0.5f, 0.5f, 0.5f, 0.0f,0.0f,
+		-0.5f, 0.5f,-0.5f, 0.0f,1.0f
+	};
+
+
 	// we start from 0
+	// used by element buffer objects to store reusable vertices for OpenGL to use
+	// for certain shapes
 	unsigned int indices[] = {
+		0,1,3,
+		1,2,3
+	};
+
+	unsigned int indices2[] = {
 		0,1,3,
 		1,2,3
 	};
@@ -201,10 +256,18 @@ int main() {
 		-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left 
 	};
 
-	
+	float rectangleVertices2[] = {
+		// 0-2 positions // 3-5 colors    //6-7 texture coordinates 
+		0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // top right
+		0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+		-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left 
+	};
+
+
 
 	// creates a values to store the vertexShader, then creates it
-	
+
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -212,8 +275,8 @@ int main() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	
-	
+
+
 
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
@@ -235,7 +298,7 @@ int main() {
 	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	
+
 	// allows for extensive debugging
 	int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
@@ -245,41 +308,46 @@ int main() {
 		glDebugMessageCallback(glDebugOutput, nullptr);
 		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 	}
-	
+
 	//-----------------------------------------------------
 	//Shader Time 
 
+	glEnable(GL_DEPTH_TEST);
+
 	Shader ourShader("vertex_shader.vert", "fragment_shader.frag");
-	
-	// First, create the Vertex Buffer Objects and Vertex Array Objects
+	//Shader ourShader2("vertex_shader.vert", "fragment_shader.frag");
+
+	// First, create the Vertex Buffer Objects, Vertex Array Objects, and Element Buffer Objects
 	// Vertex Buffer Objects maange the memory created on the GPU to store vertex data
 	// Vertex Array Objects works similarly but instead stores the following vertex attributes 
+	// Element Buffer Objects
 	unsigned int VBOs[2], VAOs[2], EBOs[2];
 
-	
+
 	// First rectangle with texture setup
 	glGenVertexArrays(1, VAOs); // we can also generate multiple VAOs or buffers at the same time
 	glGenBuffers(1, VBOs);
 	glGenBuffers(1, EBOs);
 
 	glBindVertexArray(VAOs[0]);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOs[0]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOs[0]);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);	// Vertex attributes stay the same
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);	// Vertex attributes stay the same
 	glEnableVertexAttribArray(0);
 	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+		//(void*)(3 * sizeof(float)));
+	//glEnableVertexAttribArray(1);
+	// texture attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
 		(void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	// texture attribute
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-		(void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
 
 
 	/*
@@ -331,8 +399,8 @@ int main() {
 
 
 
-	
-	
+
+
 	//-----------------------------------------------------
 	//Texture Time 
 
@@ -368,7 +436,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	
+
 	data = stbi_load("lighthouse.png", &width, &height, &nrChannels, 0);
 
 	if (data) {
@@ -381,79 +449,185 @@ int main() {
 	// frees up data from the texture
 	stbi_image_free(data);
 
-	
+
+
 	ourShader.use();
-	glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
+	//glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
+	ourShader.setInt("texture1", 0);
 	ourShader.setInt("texture2", 1);
 
-
-
-	// render loop or while the window has not been instructed to be closed
-	while (!glfwWindowShouldClose(window)) {
-		// checks for key presses every frame
-		processInput(window);
-
-		// clears the colorbuffer
-		glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+	//ourShader2.use();
+	//glUniform1i(glGetUniformLocation(ourShader2.ID, "texture1"), 0);
+	//ourShader2.setInt("texture2", 1);
 
 
 
-		
-		// Activates the Shader program
-		//ourShader.use();
-		
-		// retrieves the running time in seconds
-		//float timeValue = glfwGetTime();
-		// we change the color dynamically between 0.0 and 1.0 with the sin function
-		//float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-		// queries the location of the ourColor
-		//int vertexColorLocation = glGetUniformLocation(Shader.shader, "ourColor");
-		// sets the uniform value
-		//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-		// draws the first triangle from the data in the first Vertex Array Object
-		
-		//glBindVertexArray(VAOs[0]);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
 
-		
+		// render loop or while the window has not been instructed to be closed
+		while (!glfwWindowShouldClose(window)) {
+			// checks for key presses every frame
+			processInput(window);
 
-	
-		glActiveTexture(GL_TEXTURE0); // activates the texture unit first
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glActiveTexture(GL_TEXTURE1); // activates the texture unit first
-		glBindTexture(GL_TEXTURE_2D, texture2);
-
-		ourShader.setFloat("visibility", visibility);
-
-		ourShader.use();
-		glBindVertexArray(VAOs[0]);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			// clears the colorbuffer
+			glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-		//glUseProgram(shaderProgram2);
-		//glBindVertexArray(VAOs[1]);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+			// retrieves the running time in seconds
+			//float timeValue = glfwGetTime();
+			// we change the color dynamically between 0.0 and 1.0 with the sin function
+			//float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+			// queries the location of the ourColor
+			//int vertexColorLocation = glGetUniformLocation(Shader.shader, "ourColor");
+			// sets the uniform value
+			//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+			// draws the first triangle from the data in the first Vertex Array Object
+
+			//glBindVertexArray(VAOs[0]);
+			//glDrawArrays(GL_TRIANGLES, 0, 3);
 
 
-		// check and call events and swap the buffers
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
+
+			// activates the texture unit first
+			glActiveTexture(GL_TEXTURE0);
+			// Binds the texture
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, texture2);
+
+
+			// Activates the Shader program
+			ourShader.use();
+
+			//ourShader.setFloat("visibility", visibility);
+
+			//ourShader.setFloat("visibility", visibility);
+
+
+
+			// Transformation matrix
+
+			/*
+			// define the vector
+			vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+			// define the identity matrix (for now named trans)
+			mat4 trans = mat4(1.0f);
+			// pass our identiy matrix to the translate function with the translate vector
+			trans = translate(trans, vec3(1.0f, 1.0f, 0.0f));
+			// multiply the vector by the transformation matrix
+			vec = trans * vec;
+			// prints 210 as a result (2,1,0)
+			cout << vec.x << vec.y << vec.z << endl;
+			
+			*/
+			// Scaling and rotating the container object
+
+			/*
+			// again we start by initializing the transformation matrix as an identity matrix
+			mat4 trans = mat4(1.0f);
+
+			// scale the container by 0.5 on each axis
+			trans = scale(trans, vec3(1.1f, 1.1f, 1.1f));
+			// rotates the matrix by 90 degrees around the Z-axis
+			trans = rotate(trans, 45.5f, vec3(0.0f, 0.0f, 1.0f));
+			// queries the location of the uniform variable and then sends the matrix
+			// data to the shaders using glUniform and Matrix4fv as it's postfix
+			unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+			glUniformMatrix4fv(transformLoc, 1, GL_FALSE, value_ptr(trans));
+			*/
+
+			
+			//camera time
+			unsigned int modelLoc, viewLoc, projectionLoc;
+
+			// model matrix, rotated on the x axis
+			mat4 model = mat4(1.0f);
+			model = rotate(model, (float) glfwGetTime(), vec3(0.5f, 1.0f, 0.0f));
+
+			
+
+			// view matrix, on the -z axis since we need to move it backwards
+			mat4 view = mat4(1.0f);
+			view = translate(view, vec3(0.0f, 0.0f, -3.0f));
+
+			
+			// projection matrix
+			mat4 projection = mat4(1.0f);
+			projection = perspective(radians(45.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+
+			modelLoc = glGetUniformLocation(ourShader.ID, "model");
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
+
+			viewLoc = glGetUniformLocation(ourShader.ID, "view");
+			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
+
+
+			projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
+			glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
+			
+
+			// Binds the Vertex Array Object
+			glBindVertexArray(VAOs[0]);
+			// Draws primitives using the active shader with the previously defined
+			// vertex attribute configuration with the VBO'S vertex data indirectly bound
+			// through the VAO
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+			/*
+			trans = mat4(1.0f);
+			trans = translate(trans, vec3(-0.5f, -0.5f, 0.0f));
+			float scaleAmount = (float)(sin(glfwGetTime()));
+			trans = scale(trans, vec3(scaleAmount, scaleAmount, scaleAmount));
+			glUniformMatrix4fv(transformLoc, 1, GL_FALSE, value_ptr(trans));
+
+
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			*/
+
+			
+			//ourShader2.use();
+			//glBindVertexArray(VAOs[1]);
+			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+			//mat4 trans2 = mat4(1.0f);
+			//trans2 = translate(trans, vec3(1.0f, 2.0f, 0.0f));
+			//trans2 = scale(trans, vec3(1.5f + (float(glfwGetTime()) + sin(3)), 1.5f, 1.5f));
+			//unsigned int transformLoc2 = glGetUniformLocation(ourShader.ID, "transform");
+			//glUniformMatrix4fv(transformLoc2, 1, GL_FALSE, value_ptr(trans2));
+
+
+
+			//glUseProgram(shaderProgram2);
+			//glBindVertexArray(VAOs[1]);
+			//glDrawArrays(GL_TRIANGLES, 0, 3);
+			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+			// check and call events and swap the buffers
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+		}
 
 
 	// optional: de-allocate all resources once they've outlived their purpose:
 	// ------------------------------------------------------------------------
+	//cleanup(VAOs, VBOs, EBOs);
 	glDeleteVertexArrays(2, VAOs);
 	glDeleteBuffers(2, VBOs);
 	glDeleteBuffers(2, EBOs);
-	//glDeleteProgram(shaderProgram2);
-
 
 	glfwTerminate();
 	return 0;
 
 }
 
+
+void cleanup(unsigned int* VAOs, unsigned int* VBOs, unsigned int* EBOs) {
+	glDeleteVertexArrays(2, VAOs);
+	glDeleteBuffers(2, VBOs);
+	glDeleteBuffers(2, EBOs);
+}
 

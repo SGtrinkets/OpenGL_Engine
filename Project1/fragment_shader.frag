@@ -3,7 +3,7 @@ out vec4 FragColor;
 in vec3 ourColor;
 in vec2 TexCoord;
 
-uniform float visibility;
+uniform float visibility = 0.5f;
 
 uniform sampler2D texture1;
 uniform sampler2D texture2;

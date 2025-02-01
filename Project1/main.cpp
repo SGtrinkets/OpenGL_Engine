@@ -21,7 +21,17 @@ using namespace glm;
 const unsigned int SCREEN_HEIGHT = 600;
 const unsigned int SCREEN_WIDTH = 800;
 
+vec3 cameraPos = vec3(0.0f, 0.0f, 3.0f);
+vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
+vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
+
 float visibility = 0.5f;
+
+// Keeps track between current frame and last frame.
+float deltaTime = 0.0f;
+// Keeps track of time since last frame
+float lastFrame = 0.0f;
+
 
 // used to callback the viewport dimensions if a user wants to resize the window
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -33,21 +43,29 @@ void processInput(GLFWwindow* window)
 	// checks to see whether the escape key is being pressed
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) ==GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) 
-	{
-		visibility += 0.001f;
-		if (visibility >= 1.0f) {
-			visibility = 1.0f;
-		}
-	}
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) 
-	{
-		visibility -= 0.001f;
-		if (visibility <= 0.0f) {
-			visibility = 0.0f;
-		}
-	}
 
+	char key = '\0';
+	float cameraSpeed = 2.5f * deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		cameraSpeed = 5.0f * deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		cameraPos += cameraSpeed * cameraFront;
+		key = 'W';
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		cameraPos -= cameraSpeed * cameraFront;
+		key = 'S';
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		cameraPos -= normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+		key = 'A';
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		cameraPos += normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
+		key = 'D';
+	}
+	if (key != '\0')
+		cout << "Key Pressed: " << key << endl;
 }
 
 
@@ -231,6 +249,19 @@ int main() {
 		0.5f, 0.5f, 0.5f, 1.0f,0.0f,
 		-0.5f, 0.5f, 0.5f, 0.0f,0.0f,
 		-0.5f, 0.5f,-0.5f, 0.0f,1.0f
+	};
+
+	vec3 cubePositions[] = {
+		 vec3(0.0f, 0.0f, 0.0f),
+		 vec3(2.0f, 5.0f,-15.0f),
+		 vec3(-1.5f,-2.2f,-2.5f),
+		 vec3(-3.8f,-2.0f,-12.3f),
+		 vec3(2.4f,-0.4f,-3.5f),
+		 vec3(-1.7f, 3.0f,-7.5f),
+		 vec3(1.3f,-2.0f,-2.5f),
+		 vec3(1.5f, 2.0f,-2.5f),
+		 vec3(1.5f, 0.2f,-1.5f),
+		 vec3(-1.3f, 1.0f,-1.5f)
 	};
 
 
@@ -462,11 +493,18 @@ int main() {
 
 
 
+	// Camera Time
+
+
 
 		// render loop or while the window has not been instructed to be closed
 		while (!glfwWindowShouldClose(window)) {
 			// checks for key presses every frame
 			processInput(window);
+
+			float currentFrame = glfwGetTime();
+			deltaTime = currentFrame - lastFrame;
+			lastFrame = currentFrame;
 
 			// clears the colorbuffer
 			glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
@@ -542,37 +580,52 @@ int main() {
 			unsigned int modelLoc, viewLoc, projectionLoc;
 
 			// model matrix, rotated on the x axis
-			mat4 model = mat4(1.0f);
-			model = rotate(model, (float) glfwGetTime(), vec3(0.5f, 1.0f, 0.0f));
+			//mat4 model = mat4(1.0f);
+			//model = rotate(model, (float) glfwGetTime(), vec3(0.5f, 1.0f, 0.0f));
 
 			
-
-			// view matrix, on the -z axis since we need to move it backwards
 			mat4 view = mat4(1.0f);
-			view = translate(view, vec3(0.0f, 0.0f, -3.0f));
+			view = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 			
 			// projection matrix
 			mat4 projection = mat4(1.0f);
 			projection = perspective(radians(45.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 
-			modelLoc = glGetUniformLocation(ourShader.ID, "model");
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
+			//modelLoc = glGetUniformLocation(ourShader.ID, "model");
+			//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
 
 			viewLoc = glGetUniformLocation(ourShader.ID, "view");
-			glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
+			//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
+			ourShader.setMat4("view", view);
 
 
 			projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
-			glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
+			//glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
+			ourShader.setMat4("projection", projection);
+
+
+
 			
+
 
 			// Binds the Vertex Array Object
 			glBindVertexArray(VAOs[0]);
+
+			for (unsigned int i = 0; i < 10; i++) {
+				mat4 model = mat4(1.0f);
+				model = translate(model, cubePositions[i]);
+				float angle = 20.0f * i;
+				model = rotate(model, radians(angle), vec3(1.0f, 0.3f, 0.5f));
+				ourShader.setMat4("model", model);
+
+				glDrawArrays(GL_TRIANGLES, 0, 36);
+			}
+
 			// Draws primitives using the active shader with the previously defined
 			// vertex attribute configuration with the VBO'S vertex data indirectly bound
 			// through the VAO
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			//glDrawArrays(GL_TRIANGLES, 0, 36);
 			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 

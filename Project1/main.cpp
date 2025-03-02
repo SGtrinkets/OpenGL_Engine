@@ -21,6 +21,17 @@ using namespace glm;
 const unsigned int SCREEN_HEIGHT = 600;
 const unsigned int SCREEN_WIDTH = 800;
 
+// mouse rotations (pitch is x, yaw is y)
+// default value for yaw  is -90 so that it starts at the negative z-axis by default
+float g_yaw = -90.0f;
+float g_pitch = 0.0f;
+
+// mouse positions recorded in last frame
+float lastX = 400, lastY = 300;
+
+bool firstMouse = true;
+
+
 vec3 cameraPos = vec3(0.0f, 0.0f, 3.0f);
 vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
 vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
@@ -36,6 +47,49 @@ float lastFrame = 0.0f;
 // used to callback the viewport dimensions if a user wants to resize the window
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+}
+
+// xpos and ypos represent the current mouse positions respectively.
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (firstMouse) {
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+
+	float xoffset = xpos - lastX; // x ranges from right to left
+	float yoffset = lastY - ypos; //reversed  since y ranges from bottom to top
+
+	// resets the last positions of the mouse to the current positions
+	lastX = xpos;
+	lastY = ypos;
+
+	// offsets are multiplied by a sensitivity value because to mitigate the initial velocity
+	// of the movement
+	const float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	// adding the offset values to the rotation values
+	g_yaw += xoffset;
+	g_pitch += yoffset;
+
+
+	// To ensure that we don't infinitely loop over the x axis (like a head rotating vertically infinitely)
+	if (g_pitch > 89.0f)
+		g_pitch = 89.0f;
+	if (g_pitch < -89.0f)
+		g_pitch = -89.0f;
+
+	vec3 direction;
+
+	direction.x = cos(radians(g_yaw)) * cos(radians(g_pitch));
+	direction.y = sin(radians(g_pitch));
+	direction.z = sin(radians(g_yaw)) * cos(radians(g_pitch));
+
+	// contains all the rotations calculated from the mouse movement to be updated each iteration
+	cameraFront = normalize(direction);
 }
 
 void processInput(GLFWwindow* window)
@@ -330,6 +384,11 @@ int main() {
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	glfwSetCursorPosCallback(window, mouse_callback);
+
+	// renders the mouse invisible when the application is in focus
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 	// allows for extensive debugging
 	int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
@@ -603,9 +662,6 @@ int main() {
 			projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
 			//glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
 			ourShader.setMat4("projection", projection);
-
-
-
 			
 
 

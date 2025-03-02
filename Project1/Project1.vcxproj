@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\VIsual studio\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\VIsual studio\Libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\glad\include;C:\glfw\glfw-3.4\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -112,7 +112,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>D:\VIsual studio\Libs\glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"C:\glfw\glfw-3.4\build\src\Debug\glfw3.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,7 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="glad.c" />
+    <ClCompile Include="..\..\glad\src\glad.c" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -32,7 +32,7 @@ class Camera
 public:
     // camera Attributes
     vec3 position;
-    vec3 front;
+    vec3 Front;
     vec3 up;
     vec3 right;
     vec3 worldup;
@@ -47,28 +47,28 @@ public:
     float zoom;
 
     // constructor with vectors
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : front(glm::vec3(0.0f, 0.0f, -1.0f)), speed(speed), sensitivity(sensitivity), zoom(zoom)
+    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), speed(SPEED), sensitivity(SENSITIVITY), zoom(ZOOM)
     {
-        position = position;
-        worldup = up;
-        yaw = yaw;
-        pitch = pitch;
+        this->position = position;
+        this->worldup = up;
+        this->yaw = yaw;
+        this->pitch = pitch;
         updateCameraVectors();
     }
     // constructor with scalar values
-    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), speed(speed), sensitivity(sensitivity), zoom(zoom)
+    Camera(double posX, double posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), speed(SPEED), sensitivity(SENSITIVITY), zoom(ZOOM)
     {
         position = glm::vec3(posX, posY, posZ);
         worldup = glm::vec3(upX, upY, upZ);
-        yaw = yaw;
-        pitch = pitch;
+        this->yaw = yaw;
+        this->pitch = pitch;
         updateCameraVectors();
     }
 
     // returns the view matrix calculated using euler angles and the lookAt Matrix
     mat4 GetViewMatrix()
     {
-        return lookAt(position, position + front, up);
+        return lookAt(position, position + Front, up);
 
         // first parameter is the current camera position
         // second parameter is the target point the camera should be looking at
@@ -80,17 +80,21 @@ public:
     {
         float velocity = speed * deltaTime;
         if (direction == FORWARD)
-            position += front * velocity;
+            position += Front * velocity;
         if (direction == BACKWARD)
-            position -= front * velocity;
+            position -= Front * velocity;
         if (direction == LEFT)
             position -= right * velocity;
         if (direction == RIGHT)
             position += right * velocity;
+        if (direction == UP)
+            position += worldup * velocity;
+        if (direction == DOWN)
+            position -= worldup * velocity;
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainpitch = true)
+    void ProcessMouseMovement(double xoffset, double yoffset, GLboolean constrainpitch = true)
     {
         xoffset *= sensitivity;
         yoffset *= sensitivity;
@@ -112,13 +116,13 @@ public:
     }
 
     // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-    void ProcessMouseScroll(float yoffset)
+    void ProcessMouseScroll(double yoffset)
     {
         zoom -= (float)yoffset;
-        if (zoom < 1.0f)
-            zoom = 1.0f;
-        if (zoom > 45.0f)
+        if (zoom < 45.0f)
             zoom = 45.0f;
+        if (zoom > 135.0f)
+            zoom = 135.0f;
     }
 
 private:
@@ -130,10 +134,10 @@ private:
         front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         front.y = sin(glm::radians(pitch));
         front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front = glm::normalize(front);
+        Front = glm::normalize(front);
         // also re-calculate the right and up vector
-        right = normalize(glm::cross(front, worldup));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-        up = normalize(glm::cross(right, front));
+        right = normalize(glm::cross(Front, worldup));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+        up = normalize(glm::cross(right, Front));
     }
 
 };

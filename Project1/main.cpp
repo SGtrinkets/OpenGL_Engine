@@ -24,8 +24,8 @@ const unsigned int SCREEN_WIDTH = 800;
 
 // mouse rotations (pitch is x, yaw is y)
 // default value for yaw  is -90 so that it starts at the negative z-axis by default
-float g_yaw = -90.0f;
-float g_pitch = 0.0f;
+//float g_yaw = -90.0f;
+//float g_pitch = 0.0f;
 
 // mouse positions recorded in last frame
 float lastX = 400, lastY = 300;
@@ -33,9 +33,7 @@ float lastX = 400, lastY = 300;
 bool firstMouse = true;
 
 
-vec3 cameraPos = vec3(0.0f, 0.0f, 3.0f);
-vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
-vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
+Camera camera(vec3(0.0f, 0.0f, 3.0f));
 
 float visibility = 0.5f;
 
@@ -66,31 +64,14 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	lastX = xpos;
 	lastY = ypos;
 
-	// offsets are multiplied by a sensitivity value because to mitigate the initial velocity
-	// of the movement
-	const float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
 	// adding the offset values to the rotation values
-	g_yaw += xoffset;
-	g_pitch += yoffset;
+	camera.ProcessMouseMovement(xoffset, yoffset);
 
+}
 
-	// To ensure that we don't infinitely loop over the x axis (like a head rotating vertically infinitely)
-	if (g_pitch > 89.0f)
-		g_pitch = 89.0f;
-	if (g_pitch < -89.0f)
-		g_pitch = -89.0f;
-
-	vec3 direction;
-
-	direction.x = cos(radians(g_yaw)) * cos(radians(g_pitch));
-	direction.y = sin(radians(g_pitch));
-	direction.z = sin(radians(g_yaw)) * cos(radians(g_pitch));
-
-	// contains all the rotations calculated from the mouse movement to be updated each iteration
-	cameraFront = normalize(direction);
+// Mouse scroll callback
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	camera.ProcessMouseScroll(yoffset);
 }
 
 void processInput(GLFWwindow* window)
@@ -98,7 +79,7 @@ void processInput(GLFWwindow* window)
 	// checks to see whether the escape key is being pressed
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) ==GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
+	/*
 	char key = '\0';
 	float cameraSpeed = 2.5f * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
@@ -121,6 +102,18 @@ void processInput(GLFWwindow* window)
 	}
 	if (key != '\0')
 		cout << "Key Pressed: " << key << endl;
+
+	*/
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+		
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessKeyboard(LEFT, deltaTime);
+
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 
@@ -385,7 +378,10 @@ int main() {
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	// Register callbacks
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 
 	// renders the mouse invisible when the application is in focus
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -415,10 +411,10 @@ int main() {
 	unsigned int VBOs[2], VAOs[2], EBOs[2];
 
 
-	// First rectangle with texture setup
-	glGenVertexArrays(1, VAOs); // we can also generate multiple VAOs or buffers at the same time
-	glGenBuffers(1, VBOs);
-	glGenBuffers(1, EBOs);
+	// First cube with texture setup
+	glGenVertexArrays(2, VAOs); // we can also generate multiple VAOs or buffers at the same time
+	glGenBuffers(2, VBOs);
+	glGenBuffers(2, EBOs);
 
 	glBindVertexArray(VAOs[0]);
 
@@ -440,54 +436,24 @@ int main() {
 		(void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	// second cube with texture setup
 
-	/*
-	// first triangle setup
-	// --------------------
-	glBindVertexArray(VAOs[0]);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
+	glBindVertexArray(VAOs[1]);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);	// Vertex attributes stay the same
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);	// Vertex attributes stay the same
 	glEnableVertexAttribArray(0);
 	// color attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+		//(void*)(3 * sizeof(float)));
+	//glEnableVertexAttribArray(1);
+	// texture attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
 		(void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	//std::cout << glGetError() << std::endl;
-
-
-	//glBindBuffer(GL_VERTEX_ARRAY, VBOs);
-	//glCheckError();
-
-
-	// glBindVertexArray(0); // no need to unbind at all as we directly bind a different VAO the next few lines
-	// second triangle setup
-	// ---------------------
-	/*
-	glBindVertexArray(VAOs[1]);	// note that we bind to a different VAO now
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);	// and a different VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0); // because the vertex data is tightly packed we can also specify 0 as the vertex attribute's stride to let OpenGL figure it out
 	glEnableVertexAttribArray(0);
-	*/
-
-
-	/*
-	glGenVertexArrays(1, VAOs); // we can also generate multiple VAOs or buffers at the same time
-	glGenBuffers(1, VBOs);
-	// first triangle setup
-	// --------------------
-	glBindVertexArray(VAOs[0]);
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(rectangleVertices), rectangleVertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-	*/
-
-
-
 
 
 
@@ -562,7 +528,7 @@ int main() {
 			// checks for key presses every frame
 			processInput(window);
 
-			float currentFrame = glfwGetTime();
+			float currentFrame = static_cast<float>(glfwGetTime());
 			deltaTime = currentFrame - lastFrame;
 			lastFrame = currentFrame;
 
@@ -598,62 +564,20 @@ int main() {
 			// Activates the Shader program
 			ourShader.use();
 
-			//ourShader.setFloat("visibility", visibility);
-
-			//ourShader.setFloat("visibility", visibility);
-
-
-
-			// Transformation matrix
-
-			/*
-			// define the vector
-			vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
-			// define the identity matrix (for now named trans)
-			mat4 trans = mat4(1.0f);
-			// pass our identiy matrix to the translate function with the translate vector
-			trans = translate(trans, vec3(1.0f, 1.0f, 0.0f));
-			// multiply the vector by the transformation matrix
-			vec = trans * vec;
-			// prints 210 as a result (2,1,0)
-			cout << vec.x << vec.y << vec.z << endl;
-			
-			*/
-			// Scaling and rotating the container object
-
-			/*
-			// again we start by initializing the transformation matrix as an identity matrix
-			mat4 trans = mat4(1.0f);
-
-			// scale the container by 0.5 on each axis
-			trans = scale(trans, vec3(1.1f, 1.1f, 1.1f));
-			// rotates the matrix by 90 degrees around the Z-axis
-			trans = rotate(trans, 45.5f, vec3(0.0f, 0.0f, 1.0f));
-			// queries the location of the uniform variable and then sends the matrix
-			// data to the shaders using glUniform and Matrix4fv as it's postfix
-			unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-			glUniformMatrix4fv(transformLoc, 1, GL_FALSE, value_ptr(trans));
-			*/
-
 			
 			//camera time
-			unsigned int modelLoc, viewLoc, projectionLoc;
+			unsigned int viewLoc, projectionLoc;
 
-			// model matrix, rotated on the x axis
+			//model matrix, rotated on the x axis
 			//mat4 model = mat4(1.0f);
 			//model = rotate(model, (float) glfwGetTime(), vec3(0.5f, 1.0f, 0.0f));
 
 			
-			mat4 view = mat4(1.0f);
-			view = lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+			mat4 view = camera.GetViewMatrix();
 
 			
 			// projection matrix
-			mat4 projection = mat4(1.0f);
-			projection = perspective(radians(45.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
-
-			//modelLoc = glGetUniformLocation(ourShader.ID, "model");
-			//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
+			mat4 projection = perspective(radians(camera.zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 
 			viewLoc = glGetUniformLocation(ourShader.ID, "view");
 			//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
@@ -664,7 +588,6 @@ int main() {
 			//glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
 			ourShader.setMat4("projection", projection);
 			
-
 
 			// Binds the Vertex Array Object
 			glBindVertexArray(VAOs[0]);
@@ -678,43 +601,6 @@ int main() {
 
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
-
-			// Draws primitives using the active shader with the previously defined
-			// vertex attribute configuration with the VBO'S vertex data indirectly bound
-			// through the VAO
-			//glDrawArrays(GL_TRIANGLES, 0, 36);
-			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-
-			/*
-			trans = mat4(1.0f);
-			trans = translate(trans, vec3(-0.5f, -0.5f, 0.0f));
-			float scaleAmount = (float)(sin(glfwGetTime()));
-			trans = scale(trans, vec3(scaleAmount, scaleAmount, scaleAmount));
-			glUniformMatrix4fv(transformLoc, 1, GL_FALSE, value_ptr(trans));
-
-
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-			*/
-
-			
-			//ourShader2.use();
-			//glBindVertexArray(VAOs[1]);
-			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-			//mat4 trans2 = mat4(1.0f);
-			//trans2 = translate(trans, vec3(1.0f, 2.0f, 0.0f));
-			//trans2 = scale(trans, vec3(1.5f + (float(glfwGetTime()) + sin(3)), 1.5f, 1.5f));
-			//unsigned int transformLoc2 = glGetUniformLocation(ourShader.ID, "transform");
-			//glUniformMatrix4fv(transformLoc2, 1, GL_FALSE, value_ptr(trans2));
-
-
-
-			//glUseProgram(shaderProgram2);
-			//glBindVertexArray(VAOs[1]);
-			//glDrawArrays(GL_TRIANGLES, 0, 3);
-			//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
 
 			// check and call events and swap the buffers
 			glfwSwapBuffers(window);

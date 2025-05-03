@@ -137,7 +137,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="light_cube.fs" />
+    <None Include="light_cube.vs" />
     <None Include="fragment_shader.frag" />
+    <None Include="basic_cube.fs" />
+    <None Include="basic_cube.vs" />
     <None Include="vertex_shader.vert" />
   </ItemGroup>
   <ItemGroup>

@@ -16,7 +16,7 @@ uniform mat4 projection;
 
 void main()
 {
-	ourPos = aPos;
+	//ourPos = aPos;
 	//gl_Position = vec4(ourPos.x, ourPos.y, ourPos.z,1.0); // we give a vec3 a vec4's constructor
 	
 	// transform rotates it 90 degrees and makes it twice as small
@@ -25,5 +25,5 @@ void main()
 	gl_Position = projection * view * model * vec4(aPos, 1.0f);
 
 	//ourColor = aColor; // set ourColor to input color from the vertex data
-	TexCoord = aTexCoord;
+	//TexCoord = aTexCoord;
 };

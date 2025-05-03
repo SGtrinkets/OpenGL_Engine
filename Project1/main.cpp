@@ -31,6 +31,8 @@ bool firstMouse = true;
 
 Camera camera(vec3(0.0f, 0.0f, 3.0f));
 
+vec3 lightPos(1.2f, 1.0f, 2.0f);
+
 float visibility = 0.5f;
 
 // Keeps track between current frame and last frame.
@@ -356,20 +358,21 @@ int main() {
 
 	glEnable(GL_DEPTH_TEST);
 
-	Shader ourShader("vertex_shader.vert", "fragment_shader.frag");
-	//Shader ourShader2("vertex_shader.vert", "fragment_shader.frag");
+	//Shader ourShader("vertex_shader.vert", "fragment_shader.frag");
+	Shader lightingShader("light_cube.vs", "light_cube.fs");
+	Shader cubeShader("basic_cube.vs", "basic_cube.fs");
 
 	// First, create the Vertex Buffer Objects, Vertex Array Objects, and Element Buffer Objects
-	// Vertex Buffer Objects maange the memory created on the GPU to store vertex data
+	// Vertex Buffer Objects manage the memory created on the GPU to store vertex data
 	// Vertex Array Objects works similarly but instead stores the following vertex attributes 
 	// Element Buffer Objects
-	unsigned int VBOs[2], VAOs[2], EBOs[2];
+	unsigned int VBOs[1], VAOs[1], EBOs[1];
 
 
 	// First cube with texture setup
-	glGenVertexArrays(2, VAOs); // we can also generate multiple VAOs or buffers at the same time
-	glGenBuffers(2, VBOs);
-	glGenBuffers(2, EBOs);
+	glGenVertexArrays(1, VAOs); // we can also generate multiple VAOs or buffers at the same time
+	glGenBuffers(1, VBOs);
+	glGenBuffers(1, EBOs);
 
 	glBindVertexArray(VAOs[0]);
 
@@ -382,33 +385,31 @@ int main() {
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);	// Vertex attributes stay the same
 	glEnableVertexAttribArray(0);
-	// color attribute
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-		//(void*)(3 * sizeof(float)));
-	//glEnableVertexAttribArray(1);
+	/*
+	//color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+		(void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 	// texture attribute
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
 		(void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	*/
+	// light cube setup (separate VAO just to make it more understandable)
 
-	// second cube with texture setup
+	unsigned int lightVAO;
 
-	glBindVertexArray(VAOs[1]);
+	glGenVertexArrays(1, &lightVAO);
+	glBindVertexArray(lightVAO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBOs[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+	// It's only necessary to bind to the container's VBO data
+	glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
-	// position attribute
+	// light cube vertex attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);	// Vertex attributes stay the same
 	glEnableVertexAttribArray(0);
-	// color attribute
-	//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-		//(void*)(3 * sizeof(float)));
-	//glEnableVertexAttribArray(1);
-	// texture attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-		(void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(0);
+
 
 
 
@@ -462,11 +463,9 @@ int main() {
 	stbi_image_free(data);
 
 
-
-	ourShader.use();
 	//glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
-	ourShader.setInt("texture1", 0);
-	ourShader.setInt("texture2", 1);
+	//ourShader.setInt("texture1", 0);
+	//ourShader.setInt("texture2", 1);
 
 		// render loop or while the window has not been instructed to be closed
 		while (!glfwWindowShouldClose(window)) {
@@ -481,77 +480,37 @@ int main() {
 			glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+			// be sure to activate shader when setting uniforms/drawing objects
+			lightingShader.use();
+			lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+			lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
+			// view/projection transformations
+			mat4 projection = perspective(radians(camera.zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+			mat4 view = camera.GetViewMatrix();
+			lightingShader.setMat4("projection", projection);
+			lightingShader.setMat4("view", view);
 
-			// retrieves the running time in seconds
-			//float timeValue = glfwGetTime();
-			// we change the color dynamically between 0.0 and 1.0 with the sin function
-			//float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-			// queries the location of the ourColor
-			//int vertexColorLocation = glGetUniformLocation(Shader.shader, "ourColor");
-			// sets the uniform value
-			//glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-			// draws the first triangle from the data in the first Vertex Array Object
-
-			//glBindVertexArray(VAOs[0]);
-			//glDrawArrays(GL_TRIANGLES, 0, 3);
-
-
-
-			// activates the texture unit first
-			glActiveTexture(GL_TEXTURE0);
-			// Binds the texture
-			glBindTexture(GL_TEXTURE_2D, texture);
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, texture2);
-
-
-			// Activates the Shader program
-			ourShader.use();
-
-			
-			//camera time
-			unsigned int viewLoc, projectionLoc;
-
-			//model matrix, rotated on the x axis
+			// world transformation
 			mat4 model = mat4(1.0f);
-			model = rotate(model, (float) glfwGetTime(), vec3(0.5f, 1.0f, 0.0f));
+			lightingShader.setMat4("model", model);
 
-			ourShader.setMat4("model", model);
+			// render the cube
+			glBindVertexArray(lightVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 
-			
-			
-			mat4 view = camera.GetViewMatrix();
 
-			
-			// projection matrix
-			mat4 projection = perspective(radians(camera.zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+			// also draw the lamp object
+			cubeShader.use();
+			cubeShader.setMat4("projection", projection);
+			cubeShader.setMat4("view", view);
+			model = mat4(1.0f);
+			model = translate(model, lightPos);
+			model = scale(model, glm::vec3(0.2f)); // a smaller cube
+			cubeShader.setMat4("model", model);
 
-			viewLoc = glGetUniformLocation(ourShader.ID, "view");
-			//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
-			ourShader.setMat4("view", view);
-
-
-			projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
-			//glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection));
-			ourShader.setMat4("projection", projection);
-			
-
-			// Binds the Vertex Array Object
 			glBindVertexArray(VAOs[0]);
-
-			/*
-			for (unsigned int i = 0; i < 10; i++) {
-				mat4 model = mat4(1.0f);
-				model = translate(model, cubePositions[i]);
-				float angle = 20.0f * i;
-				model = rotate(model, radians(angle), vec3(1.0f, 0.3f, 0.5f));
-				ourShader.setMat4("model", model);
-
-				glDrawArrays(GL_TRIANGLES, 0, 36);
-			}
-			*/
+			glDrawArrays(GL_TRIANGLES, 0, 36);
 
 			// check and call events and swap the buffers
 			glfwSwapBuffers(window);
@@ -562,9 +521,9 @@ int main() {
 	// optional: de-allocate all resources once they've outlived their purpose:
 	// ------------------------------------------------------------------------
 	//cleanup(VAOs, VBOs, EBOs);
-	glDeleteVertexArrays(2, VAOs);
-	glDeleteBuffers(2, VBOs);
-	glDeleteBuffers(2, EBOs);
+	glDeleteVertexArrays(1, VAOs);
+	glDeleteBuffers(1, VBOs);
+	glDeleteBuffers(1, EBOs);
 
 	glfwTerminate();
 	return 0;

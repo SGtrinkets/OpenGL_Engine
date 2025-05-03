@@ -31,10 +31,16 @@ class Camera
 {
 public:
     // camera Attributes
+
+    // posiiton of the camera
     vec3 position;
+	// points forward according to the cartesian coordiante system (where x is right, y is up, -z is forward)
     vec3 Front;
+	// points up to where the camera is (positive y axis)
     vec3 up;
+	// points right to where the camera is (positive x axis)
     vec3 right;
+	// always points in the direction of the world up vector (positive y axis)
     vec3 worldup;
 
     // euler angles

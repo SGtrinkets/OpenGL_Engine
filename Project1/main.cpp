@@ -22,10 +22,6 @@ using namespace glm;
 const unsigned int SCREEN_HEIGHT = 600;
 const unsigned int SCREEN_WIDTH = 800;
 
-// mouse rotations (pitch is x, yaw is y)
-// default value for yaw  is -90 so that it starts at the negative z-axis by default
-//float g_yaw = -90.0f;
-//float g_pitch = 0.0f;
 
 // mouse positions recorded in last frame
 float lastX = 400, lastY = 300;
@@ -79,31 +75,6 @@ void processInput(GLFWwindow* window)
 	// checks to see whether the escape key is being pressed
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) ==GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-	/*
-	char key = '\0';
-	float cameraSpeed = 2.5f * deltaTime;
-	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-		cameraSpeed = 5.0f * deltaTime;
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		cameraPos += cameraSpeed * cameraFront;
-		key = 'W';
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		cameraPos -= cameraSpeed * cameraFront;
-		key = 'S';
-	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		cameraPos -= normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
-		key = 'A';
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		cameraPos += normalize(cross(cameraFront, cameraUp)) * cameraSpeed;
-		key = 'D';
-	}
-	if (key != '\0')
-		cout << "Key Pressed: " << key << endl;
-
-	*/
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -231,22 +202,6 @@ int main() {
 		-0.5f,-0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
 		0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f // top
 	};
-	/*
-	float vertices1[] = {
-		-0.5f,-0.5f, 0.0f, //bottom left
-		0.5f,-0.5f, 0.0f, // bottom right
-		0.0f, 0.5f, 0.0f // top
-	};
-	// vertices to draw two triangles
-
-	// Exercise 1: draw two triangles
-	float vertices1[] = {
-		//first triangle
-		-0.5f,-0.5f, 0.0f, //bottom left
-		0.0f,-0.5f, 0.0f, // bottom right
-		0.0f, 0.5f, 0.0f, // top
-	};
-	*/
 	float vertices2[] = {
 		//second triangle
 		0.0f,-0.5f, 0.0f, //bottom left
@@ -513,16 +468,6 @@ int main() {
 	ourShader.setInt("texture1", 0);
 	ourShader.setInt("texture2", 1);
 
-	//ourShader2.use();
-	//glUniform1i(glGetUniformLocation(ourShader2.ID, "texture1"), 0);
-	//ourShader2.setInt("texture2", 1);
-
-
-
-	// Camera Time
-
-
-
 		// render loop or while the window has not been instructed to be closed
 		while (!glfwWindowShouldClose(window)) {
 			// checks for key presses every frame
@@ -569,9 +514,13 @@ int main() {
 			unsigned int viewLoc, projectionLoc;
 
 			//model matrix, rotated on the x axis
-			//mat4 model = mat4(1.0f);
-			//model = rotate(model, (float) glfwGetTime(), vec3(0.5f, 1.0f, 0.0f));
+			mat4 model = mat4(1.0f);
+			model = rotate(model, (float) glfwGetTime(), vec3(0.5f, 1.0f, 0.0f));
 
+			ourShader.setMat4("model", model);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+
+			
 			
 			mat4 view = camera.GetViewMatrix();
 
@@ -592,6 +541,7 @@ int main() {
 			// Binds the Vertex Array Object
 			glBindVertexArray(VAOs[0]);
 
+			/*
 			for (unsigned int i = 0; i < 10; i++) {
 				mat4 model = mat4(1.0f);
 				model = translate(model, cubePositions[i]);
@@ -601,6 +551,7 @@ int main() {
 
 				glDrawArrays(GL_TRIANGLES, 0, 36);
 			}
+			*/
 
 			// check and call events and swap the buffers
 			glfwSwapBuffers(window);

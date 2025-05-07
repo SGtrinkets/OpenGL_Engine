@@ -356,6 +356,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 	//glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
@@ -510,6 +511,7 @@ int main() {
 	// frees up data from the texture
 	stbi_image_free(data);
 
+	glEnable(GL_MULTISAMPLE);
 
 	//glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
 	//ourShader.setInt("texture1", 0);
@@ -553,11 +555,15 @@ int main() {
 
 
 			// also draw the lamp object
+			int rotateRadius = -2;
 			cubeShader.use();
 			cubeShader.setMat4("projection", projection);
 			cubeShader.setMat4("view", view);
 			model = mat4(1.0f);
+			lightPos = vec3(rotateRadius * sin(glfwGetTime()), 1.0f, rotateRadius * cos(glfwGetTime()));
 			model = translate(model, lightPos);
+			
+			model = rotate(model,radians(45.0f), lightPos);
 			model = scale(model, vec3(0.5f)); // a smaller cube
 			cubeShader.setMat4("model", model);
 

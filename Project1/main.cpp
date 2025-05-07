@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <assimp/Importer.hpp>
 
 // Plugins for OpenGL Mathematics
 // Allows us to use mathematical transformations into our engine for any object
@@ -10,6 +11,7 @@
 #include <iostream>
 #include "shader.h"
 #include "camera.h"
+#include "mesh.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -39,6 +41,7 @@ float visibility = 0.5f;
 float deltaTime = 0.0f;
 // Keeps track of time since last frame
 float lastFrame = 0.0f;
+
 
 
 // used to callback the viewport dimensions if a user wants to resize the window
@@ -407,8 +410,8 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 
 	//Shader ourShader("vertex_shader.vert", "fragment_shader.frag");
-	Shader lightingShader("light_cube.vs", "light_cube.fs");
-	Shader cubeShader("basic_cube.vs", "basic_cube.fs");
+	Shader lightingShader("vertex_shaders/light_cube.vs", "fragment_shaders/light_cube.fs");
+	Shader cubeShader("vertex_shaders/basic_cube.vs", "fragment_shaders/basic_cube.fs");
 
 	// First, create the Vertex Buffer Objects, Vertex Array Objects, and Element Buffer Objects
 	// Vertex Buffer Objects manage the memory created on the GPU to store vertex data

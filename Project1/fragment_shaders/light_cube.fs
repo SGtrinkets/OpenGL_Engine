@@ -16,9 +16,6 @@ void main()
 	float ambientStrength = 0.11;
 	vec3 ambient = ambientStrength * lightColor;
 
-	//vec3 result = ambient * objectColor;
-	//FragColor = vec4(result, 1.0);
-
 	// calculates the unit vector in the same direction as the original vector
 	vec3 norm = normalize(Normal);
 	vec3 lightDir = normalize(lightPos- FragPos);
@@ -33,6 +30,6 @@ void main()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 
-	vec3 result = (ambient + diffuse + specular) * objectColor;
+	vec3 result = (ambient + diffuse) * objectColor;
 	FragColor = vec4(result, 1.0);
 }
